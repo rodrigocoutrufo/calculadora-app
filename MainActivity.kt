@@ -1,203 +1,117 @@
+package com.hadirahimi.calculator
+
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.WindowManager
 import android.widget.Button
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.example.calculadoratop.R
+import androidx.core.view.children
+import com.hadirahimi.calculator.databinding.ActivityMainBinding
 
-class CalculatorActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity()
+{
+    //binding
+    private lateinit var binding : ActivityMainBinding
 
-    private lateinit var tvFormula: TextView
-    private lateinit var tvResult: TextView
 
-    private var currentInput: String = ""
-    private var currentOperator: String = ""
-    private var operand1: Double = 0.0
-    private var operand2: Double = 0.0
-
-    override fun onCreate(savedInstanceState: Bundle?) {
+    private var firstnumber = ""
+    private var currentNumber = ""
+    private var currentOperator = ""
+    private var result = ""
+    @SuppressLint("SetTextI18n")
+    override fun onCreate(savedInstanceState : Bundle?)
+    {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // Initialize views
-        tvFormula = findViewById(R.id.tvFormula)
-        tvResult = findViewById(R.id.tvResult)
+        //NoLimitScreen
+        window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        //initViews
+        binding.apply {
+            // get all buttons
+            binding.layoutMain.children.filterIsInstance<Button>().forEach { button ->
+                //buttons click listener
+                button.setOnClickListener {
+                    //get clicked button text
+                    val buttonText = button.text.toString()
+                    when{
+                        buttonText.matches(Regex("[0-9]"))->{
+                            if(currentOperator.isEmpty())
+                            {
+                                firstnumber+=buttonText
+                                tvResult.text = firstnumber
+                            }else
+                            {
+                                currentNumber+=buttonText
+                                tvResult.text = currentNumber
+                            }
+                        }
+                        buttonText.matches(Regex("[+\\-*/]"))->{
+                            currentNumber = ""
+                            if (tvResult.text.toString().isNotEmpty())
+                            {
+                                currentOperator = buttonText
+                                tvResult.text = "0"
+                            }
+                        }
+                        buttonText == "="->{
+                            if (currentNumber.isNotEmpty()&& currentOperator.isNotEmpty())
+                            {
+                                tvFormula.text = "$firstnumber$currentOperator$currentNumber"
+                                result = evaluateExpression(firstnumber,currentNumber,currentOperator)
+                                firstnumber = result
+                                tvResult.text = result
+                            }
+                        }
+                        buttonText == "."->{
+                            if(currentOperator.isEmpty())
+                            {
+                                if (! firstnumber.contains("."))
+                                {
+                                    if(firstnumber.isEmpty())firstnumber+="0$buttonText"
+                                    else firstnumber +=buttonText
+                                    tvResult.text = firstnumber
+                                }
+                            }else
+                            {
+                                if (! currentNumber.contains("."))
+                                {
+                                    if(currentNumber.isEmpty()) currentNumber+="0$buttonText"
+                                    else currentNumber +=buttonText
+                                    tvResult.text = currentNumber
+                                }
+                            }
+                        }
+                        buttonText == "C"->{
+                            currentNumber = ""
+                            firstnumber = ""
+                            currentOperator = ""
+                            tvResult.text = "0"
+                            tvFormula.text = ""
 
-        // Set OnClickListener for numeric buttons
-        val numericButtonIds = listOf(
-            R.id.um, R.id.dois, R.id.tres, R.id.quatro,
-            R.id.cinco, R.id.seis, R.id.sete, R.id.oito,
-            R.id.novw, R.id.zero, R.id.ponto
-        )
-        numericButtonIds.forEach { id ->
-            findViewById<Button>(id).setOnClickListener {
-                onNumericButtonClick((it as Button).text.toString())
+
+                        }
+                    }
+                }
             }
-        }
 
-        // Set OnClickListener for operator buttons
-        val operatorButtonIds = listOf(R.id.mais, R.id.menus, R.id.vezes, R.id.divisao)
-        operatorButtonIds.forEach { id ->
-            findViewById<Button>(id).setOnClickListener {
-                onOperatorButtonClick((it as Button).text.toString())
-            }
-        }
 
-        // Set OnClickListener for equals button
-        findViewById<Button>(R.id.igual).setOnClickListener {
-            calculateResult()
-        }
-
-        // Set OnClickListener for clear button
-        findViewById<Button>(R.id.apagar).setOnClickListener {
-            clear()
         }
     }
 
-    private fun onNumericButtonClick(input: String) {
-        currentInput += input
-        updateFormula(currentInput)
-    }
-
-    private fun onOperatorButtonClick(operator: String) {
-        if (currentInput.isNotEmpty()) {
-            operand1 = currentInput.toDouble()
-            currentInput = ""
-            currentOperator = operator
-            updateFormula("$operand1 $currentOperator ")
+    //functions
+    private fun evaluateExpression(firstNumber:String,secondNumber:String,operator:String):String
+    {
+        val num1  = firstNumber.toDouble()
+        val num2  = secondNumber.toDouble()
+        return when(operator)
+        {
+            "+"-> (num1+num2).toString()
+            "-"-> (num1-num2).toString()
+            "*"-> (num1*num2).toString()
+            "/"-> (num1/num2).toString()
+            else ->""
         }
-    }
-
-    private fun calculateResult() {
-        if (currentInput.isNotEmpty() && currentOperator.isNotEmpty()) {
-            operand2 = currentInput.toDouble()
-            val result = when (currentOperator) {
-                "+" -> operand1 + operand2
-                "-" -> operand1 - operand2
-                "*" -> operand1 * operand2
-                "/" -> operand1 / operand2
-                else -> 0.0
-            }
-            updateResult(result.toString())
-            currentInput = result.toString()
-            currentOperator = ""
-        }
-    }
-
-    private fun clear() {
-        currentInput = ""
-        currentOperator = ""
-        operand1 = 0.0
-        operand2 = 0.0
-        updateFormula("")
-        updateResult("0")
-    }
-
-    private fun updateFormula(formula: String) {
-        tvFormula.text = formula
-    }
-
-    private fun updateResult(result: String) {
-        tvResult.text = result
-    }
-}import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import com.example.calculadoratop.R
-
-class CalculatorActivity : AppCompatActivity() {
-
-    private lateinit var tvFormula: TextView
-    private lateinit var tvResult: TextView
-
-    private var currentInput: String = ""
-    private var currentOperator: String = ""
-    private var operand1: Double = 0.0
-    private var operand2: Double = 0.0
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        // Initialize views
-        tvFormula = findViewById(R.id.tvFormula)
-        tvResult = findViewById(R.id.tvResult)
-
-        // Set OnClickListener for numeric buttons
-        val numericButtonIds = listOf(
-            R.id.um, R.id.dois, R.id.tres, R.id.quatro,
-            R.id.cinco, R.id.seis, R.id.sete, R.id.oito,
-            R.id.novw, R.id.zero, R.id.ponto
-        )
-        numericButtonIds.forEach { id ->
-            findViewById<Button>(id).setOnClickListener {
-                onNumericButtonClick((it as Button).text.toString())
-            }
-        }
-
-        // Set OnClickListener for operator buttons
-        val operatorButtonIds = listOf(R.id.mais, R.id.menus, R.id.vezes, R.id.divisao)
-        operatorButtonIds.forEach { id ->
-            findViewById<Button>(id).setOnClickListener {
-                onOperatorButtonClick((it as Button).text.toString())
-            }
-        }
-
-        // Set OnClickListener for equals button
-        findViewById<Button>(R.id.igual).setOnClickListener {
-            calculateResult()
-        }
-
-        // Set OnClickListener for clear button
-        findViewById<Button>(R.id.apagar).setOnClickListener {
-            clear()
-        }
-    }
-
-    private fun onNumericButtonClick(input: String) {
-        currentInput += input
-        updateFormula(currentInput)
-    }
-
-    private fun onOperatorButtonClick(operator: String) {
-        if (currentInput.isNotEmpty()) {
-            operand1 = currentInput.toDouble()
-            currentInput = ""
-            currentOperator = operator
-            updateFormula("$operand1 $currentOperator ")
-        }
-    }
-
-    private fun calculateResult() {
-        if (currentInput.isNotEmpty() && currentOperator.isNotEmpty()) {
-            operand2 = currentInput.toDouble()
-            val result = when (currentOperator) {
-                "+" -> operand1 + operand2
-                "-" -> operand1 - operand2
-                "*" -> operand1 * operand2
-                "/" -> operand1 / operand2
-                else -> 0.0
-            }
-            updateResult(result.toString())
-            currentInput = result.toString()
-            currentOperator = ""
-        }
-    }
-
-    private fun clear() {
-        currentInput = ""
-        currentOperator = ""
-        operand1 = 0.0
-        operand2 = 0.0
-        updateFormula("")
-        updateResult("0")
-    }
-
-    private fun updateFormula(formula: String) {
-        tvFormula.text = formula
-    }
-
-    private fun updateResult(result: String) {
-        tvResult.text = result
     }
 }
